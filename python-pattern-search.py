@@ -37,15 +37,62 @@ repeat
 stopping criteria: (could add others, but these are fine)
 mesh size less than minimum size (mesh tolerance from Matlab page)
 reach max number of iterations
+
+Version notes:
+
+version 1 - can minimize on a spherical surface!
+short term to-do: figure out how to implement constraints on coordinates, test on other optimization functions
+longer term: generalize optimization function + number of dimensions, use multiprocessing
+
+version 2 - works on other functions and can implement bounds!
+short term to-do: generalize on number of dimensions
+longer term: build GUI
+
 """
 
 import numpy as np
+import math
 
-def optimization_function(point):
+def optimization_function(point): # Currently fixed at 2-D
+# Spherical function
+	#x = point[0]
+	#y = point[1]
+	#z = x**2 + y**2
+
+# Ackley function
+	#x = point[0]
+	#y = point[1]
+	#z = -20.0*math.exp(-0.2*math.sqrt(0.5*(x**2 + y**2))) - math.exp(0.5*(math.cos(2*math.pi*x)+math.cos(2*math.pi*y))) + math.exp(1.0) + 20.0
+
+# Beale function
+#	x = point[0]
+#	y = point[1]
+#	z = (1.5-x+x*y)**2 + (2.25-x+x*y**2)**2 + (2.625-x+x*y**3)**2
+
+# Rastrigin function
+#	x = point[0]
+#	y = point[1]
+#	z = 20.0 + (x**2 - 10*math.cos(2*math.pi*x)) + (y**2 - 10*math.cos(2*math.pi*y))
+
+# Easom function
 	x = point[0]
 	y = point[1]
-	z = x**2 + y**2
+	z = (-1)*math.cos(x)*math.cos(y)*math.exp((-1)*((x-math.pi)**2 + (y-math.pi)**2))
+
 	return z
+
+def bounds_check(point): # Assumes 2-D, though looks straightforward to generalize
+	if bounds == True:
+		if point[0] < x_min:
+			point[0] = x_min
+		if point[0] > x_max:
+			point[0] = x_max
+		if point[1] < y_min:
+			point[1] = y_min
+		if point[1] > y_max:
+			point[1] = y_max
+
+	return point
 
 def generate_steps(num_dimensions,step_size,point):
 	output_list = [point] # Include starting point as a thing to be evaluated
@@ -55,6 +102,11 @@ def generate_steps(num_dimensions,step_size,point):
 		shift_vector[i] = step_size
 		newpoint_a = point + shift_vector
 		newpoint_b = point - shift_vector
+
+		if bounds == True:
+			newpoint_a = bounds_check(newpoint_a)
+			newpoint_b = bounds_check(newpoint_b)
+
 		output_list.append(newpoint_a)
 		output_list.append(newpoint_b)
 
@@ -84,17 +136,24 @@ def convergence_check(num_iterations,step_size):
 
 # Hardcoded parameters section
 num_dimensions = 2
-initial_x = 1.3
-initial_y = 1.7
-step_size = 1.0
+initial_x = 4.3 # Need to be determined based on number of dimensions instead of hardcoded
+initial_y = 4.7
+step_size = 1.0 # Assumes uniform step sizes for all dimensions, I *think* this is fine given pattern search grid employed here
 max_iterations = 1000
 min_step_size = 1E-6
+bounds = True # Says whether or not we want to check for bounds on the variables
+x_min = -100 # These should be dynamically created depending on number of dimensions and whether or not bounds is true
+x_max = 100
+y_min = -100
+y_max = 100
 #
 
 convergence_flag = 0
 num_iterations = 0
 
 initial_point = np.array([initial_x,initial_y])
+if bounds == True: # Move initial point within boundaries if it's not already in
+	initial_point = bounds_check(initial_point)
 
 while convergence_flag == 0:
 	num_iterations += 1
